@@ -1,0 +1,33 @@
+{
+  "name": "@blockquote/test-runner-mocha-style-reporter",
+  "version": "1.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Mocha-Style reporter for @web/test-runner",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oscarmarina/test-runner-mocha-style-reporter"
+  },
+  "main": "index.mjs",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "files": [
+    "*.js",
+    "*.mjs",
+    "src"
+  ],
+  "keywords": [
+    "modern-web",
+    "test",
+    "runner",
+    "testrunner",
+    "mocha",
+    "coverage"
+  ],
+  "dependencies": {
+    "@web/test-runner-core": "^0.10.20"
+  }
+}
