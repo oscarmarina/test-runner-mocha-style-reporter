@@ -74,7 +74,9 @@ export function mochaStyleReporter({
      * @param testRun the test run
      */
     onTestRunFinished({ testRun, sessions, testCoverage, focusedTestFile }) {
-      console.table(testCoverage.summary);
+      if(testCoverage?.summary) {
+        console.table(testCoverage.summary);
+      }
     },
     /**
      * Called when results for a test file can be reported. This is called
