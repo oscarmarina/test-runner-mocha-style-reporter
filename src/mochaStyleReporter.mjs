@@ -75,6 +75,9 @@ export function mochaStyleReporter({
      */
     onTestRunFinished({ testRun, sessions, testCoverage, focusedTestFile }) {
       if(testCoverage?.summary) {
+        if (testCoverage?.summary?.branchesTrue?.pct === 'Unknown') {
+          delete testCoverage.summary.branchesTrue;
+        }
         console.table(testCoverage.summary);
       }
     },
