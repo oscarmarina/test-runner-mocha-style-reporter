@@ -4,6 +4,7 @@
 const colour = {
   reset: '\x1b[0m',
   BrightBlue: '\x1b[94m',
+  BrightCyan: '\x1b[96m',
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
@@ -12,10 +13,14 @@ const colour = {
 };
 
 function outputSuite(suite, indent = '') {
-  let results = `${colour.BrightBlue}${suite.name}\n`;
+  let results = `${colour.grey}${indent === '• ' ? '\n' : ''}${indent}${
+    suite.tests.length ? indent : ''
+  }${suite.tests.length ? colour.BrightCyan : colour.BrightBlue}${suite.name}${
+    suite.tests.length ? `\n` : ''
+  }`;
   results += `${suite.tests
-    .map(test => {
-      let result = indent;
+    .map((test) => {
+      let result = '     ';
       switch (test instanceof Object) {
         case test.skipped:
           result += `${colour.grey} - ${test.name}`;
@@ -41,30 +46,24 @@ function outputSuite(suite, indent = '') {
       result += `${colour.reset}`;
       return result;
     })
-    .join('\n')}\n`;
+    .join('\n')}${suite.tests.length ? '' : '\n'}`;
 
   if (suite.suites) {
-    results += suite.suites
-      .map(suiteIn => outputSuite(suiteIn, `${indent}`))
-      .join('\n');
+    const indent = suite.tests ? '   ' : '';
+    results += suite.suites.map((suiteIn) => outputSuite(suiteIn, indent)).join('\n');
   }
   return results;
 }
 
 async function generateTestReport(testFile, sessionsForTestFile) {
   let results = '';
-  sessionsForTestFile.forEach(session => {
-    results += session.testResults.suites
-      .map(suite => outputSuite(suite, ''))
-      .join('\n\n');
+  sessionsForTestFile.forEach((session) => {
+    results += session.testResults.suites.map((suite) => outputSuite(suite, '• ')).join('\n');
   });
   return results;
 }
 
-export function mochaStyleReporter({
-  reportResults = true,
-  reportProgress = true,
-} = {}) {
+export function mochaStyleReporter({ reportResults = true, reportProgress = true } = {}) {
   return {
     /**
      * Called when a test run is finished. Each file change in watch mode
@@ -74,10 +73,11 @@ export function mochaStyleReporter({
      * @param testRun the test run
      */
     onTestRunFinished({ testRun, sessions, testCoverage, focusedTestFile }) {
-      if(testCoverage?.summary) {
+      if (testCoverage?.summary) {
         if (testCoverage?.summary?.branchesTrue?.pct === 'Unknown') {
           delete testCoverage.summary.branchesTrue;
         }
+        console.log('\n');
         console.table(testCoverage.summary);
       }
     },
@@ -99,10 +99,7 @@ export function mochaStyleReporter({
       if (!reportResults) {
         return;
       }
-      const testReport = await generateTestReport(
-        testFile,
-        sessionsForTestFile
-      );
+      const testReport = await generateTestReport(testFile, sessionsForTestFile);
 
       logger.group();
       console.log(testReport);
