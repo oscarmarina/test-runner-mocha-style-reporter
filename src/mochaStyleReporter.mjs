@@ -75,6 +75,17 @@ export function mochaStyleReporter({ reportResults = true, reportProgress = true
         if (testCoverage?.summary?.branchesTrue?.pct === 'Unknown') {
           delete testCoverage.summary.branchesTrue;
         }
+
+        const totalSkipped = Object.keys(testCoverage.summary).reduce((prev, next) => {
+          return prev + testCoverage.summary[next]?.skipped;
+        }, 0);
+
+        if (totalSkipped === 0) {
+          Object.keys(testCoverage.summary).forEach((key) => {
+            delete testCoverage.summary[key]?.skipped;
+          });
+        }
+
         console.log('\n');
         console.table(testCoverage.summary);
       }
