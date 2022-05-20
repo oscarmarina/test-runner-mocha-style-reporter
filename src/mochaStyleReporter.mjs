@@ -13,11 +13,9 @@ const colour = {
 };
 
 function outputSuite(suite, indent = '') {
-  let results = `${colour.grey}${indent === '• ' ? '\n' : ''}${indent}${
-    suite.tests.length ? indent : ''
-  }${suite.tests.length ? colour.BrightCyan : colour.BrightBlue}${suite.name}${
-    suite.tests.length ? `\n` : ''
-  }`;
+  let results = `${indent === '• ' ? '\n' : ''}${indent}${suite.tests.length ? indent : ''}${
+    suite.tests.length ? colour.BrightBlue : colour.reset
+  }${suite.name}${suite.tests.length ? `\n` : ''}`;
   results += `${suite.tests
     .map((test) => {
       let result = '     ';
@@ -26,7 +24,7 @@ function outputSuite(suite, indent = '') {
           result += `${colour.grey} - ${test.name}`;
           break;
         case test.passed:
-          result += `${colour.green} ✓ ${colour.reset}${colour.bright}${test.name}`;
+          result += `${colour.green} ✓ ${colour.reset}${colour.green}${test.name}`;
           break;
         default:
           result += `${colour.red} ✕ ${test.name}`;
