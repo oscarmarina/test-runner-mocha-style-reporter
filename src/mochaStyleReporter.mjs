@@ -44,10 +44,10 @@ function outputSuite(suite, indent = '') {
       result += `${colour.reset}`;
       return result;
     })
-    .join('\n')}${suite.tests.length ? '' : '\n'}`;
+    .join('\n')}${suite.tests.length ? '\n' : '\n'}`;
 
   if (suite.suites) {
-    const indent = suite.tests ? '   ' : '';
+    const indent = suite.tests ? '  ' : '';
     results += suite.suites.map((suiteIn) => outputSuite(suiteIn, indent)).join('\n');
   }
   return results;
