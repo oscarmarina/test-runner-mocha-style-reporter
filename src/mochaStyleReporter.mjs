@@ -1,67 +1,69 @@
 /* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
 
-const colour = {
+const colors = {
   reset: '\x1b[0m',
-  BrightBlue: '\x1b[94m',
-  BrightCyan: '\x1b[96m',
+  brightBlue: '\x1b[94m',
+  brightCyan: '\x1b[96m',
+  dim: '\x1b[2m',
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   bright: '\x1b[1m',
+  white: '\x1b[37m',
   grey: '\x1b[90m',
 };
 
-function outputSuite(suite, indent = '') {
-  let results = `${indent === '• ' ? '\n' : ''}${indent}${suite.tests.length ? indent : ''}${
-    suite.tests.length ? colour.BrightBlue : colour.reset
-  }${suite.name}${suite.tests.length ? `\n` : ''}`;
-  results += `${suite.tests
-    .map((test) => {
-      let result = '     ';
-      switch (test instanceof Object) {
-        case test.skipped:
-          result += `${colour.grey} - ${test.name}`;
-          break;
-        case test.passed:
-          result += `${colour.green} ✓ ${colour.reset}${colour.green}${test.name}`;
-          break;
-        default:
-          result += `${colour.red} ✕ ${test.name}`;
-          break;
-      }
-      switch (test instanceof Object) {
-        case test.duration > 100:
-          result += ` ${colour.reset}${colour.red}(${test.duration}ms)`;
-          break;
-        case test.duration > 50:
-          result += ` ${colour.reset}${colour.yellow}(${test.duration}ms)`;
-          break;
-        default:
-          result += ``;
-          break;
-      }
-      result += `${colour.reset}`;
-      return result;
-    })
-    .join('\n')}${suite.tests.length ? '\n' : '\n'}`;
+function outputSuite(suite, indent = '', browser = '') {
+  const heading = `${colors.white}${suite.name}${browser ? ` [${browser}]` : '\n'}`;
 
-  if (suite.suites) {
-    const indent = suite.tests ? '  ' : '';
-    results += suite.suites.map((suiteIn) => outputSuite(suiteIn, indent)).join('\n');
+  function getTestResult(test) {
+    if (test.skipped) {
+      return `${colors.grey} ⤵  ${test.name}`;
+    }
+    if (test.passed) {
+      return `${colors.green} ✓ ${colors.reset}${colors.bright}${test.name}`;
+    }
+    return `${colors.red} ✕ ${test.name}`;
   }
-  return results;
+
+  function getTestDuration(test) {
+    if (test.duration > 100) {
+      return ` ${colors.reset}${colors.red}(${test.duration}ms)`;
+    }
+    if (test.duration > 50) {
+      return ` ${colors.reset}${colors.yellow}(${test.duration}ms)`;
+    }
+    return '';
+  }
+
+  const testResults = suite.tests
+    .map(test => {
+      const result = getTestResult(test);
+      const duration = getTestDuration(test);
+      return `${indent}${result}${duration}${colors.reset}`;
+    })
+    .join('\n');
+
+  const subSuites = suite.suites
+    ? suite.suites.map(subSuite => outputSuite(subSuite, `${indent} `)).join('')
+    : '';
+
+  return `${indent}${heading}${colors.reset}${testResults}\n${subSuites}`;
 }
 
-async function generateTestReport(testFile, sessionsForTestFile) {
+function generateTestReport(testFile, sessionsForTestFile) {
   let results = '';
-  sessionsForTestFile.forEach((session) => {
-    results += session.testResults.suites.map((suite) => outputSuite(suite, '• ')).join('\n');
+
+  sessionsForTestFile.forEach(session => {
+    const browserName = session.browser?.name ?? '';
+    results += session.testResults.suites.map(suite => outputSuite(suite, '', browserName));
+    results += '\n';
   });
   return results;
 }
 
-export function mochaStyleReporter({ reportResults = true, reportProgress = true } = {}) {
+export function mochaStyleReporter({ reportResults = true, reportCoverage = true } = {}) {
   return {
     /**
      * Called when a test run is finished. Each file change in watch mode
@@ -72,22 +74,24 @@ export function mochaStyleReporter({ reportResults = true, reportProgress = true
      */
     onTestRunFinished({ testRun, sessions, testCoverage, focusedTestFile }) {
       if (testCoverage?.summary) {
-        if (testCoverage?.summary?.branchesTrue?.pct === 'Unknown') {
-          delete testCoverage.summary.branchesTrue;
+        const summaryCopy = { ...testCoverage.summary };
+        if (summaryCopy.branchesTrue?.pct === 'Unknown') {
+          delete summaryCopy.branchesTrue;
         }
-
-        const totalSkipped = Object.keys(testCoverage.summary).reduce((prev, next) => {
-          return prev + testCoverage.summary[next]?.skipped;
-        }, 0);
-
+        const totalSkipped = Object.keys(summaryCopy).reduce(
+          (prev, next) =>
+            prev + (testCoverage.summary[next]?.skipped ? testCoverage.summary[next].skipped : 0),
+          0,
+        );
         if (totalSkipped === 0) {
-          Object.keys(testCoverage.summary).forEach((key) => {
-            delete testCoverage.summary[key]?.skipped;
+          Object.keys(summaryCopy).forEach(key => {
+            delete summaryCopy[key]?.skipped;
           });
         }
 
-        console.log('\n');
-        console.table(testCoverage.summary);
+        if (reportCoverage) {
+          console.table(summaryCopy);
+        }
       }
     },
     /**
@@ -104,14 +108,14 @@ export function mochaStyleReporter({ reportResults = true, reportProgress = true
      * @param sessionsForTestFile the sessions for this test file. each browser is a
      * different session
      */
-    async reportTestFileResults({ logger, sessionsForTestFile, testFile }) {
+    reportTestFileResults({ logger, sessionsForTestFile, testFile }) {
       if (!reportResults) {
         return;
       }
-      const testReport = await generateTestReport(testFile, sessionsForTestFile);
+      const testReport = generateTestReport(testFile, sessionsForTestFile);
 
       logger.group();
-      console.log(testReport);
+      logger.log(testReport);
       logger.groupEnd();
     },
   };
