@@ -1,14 +1,12 @@
-# Test Runner Mocha-Style Reporter
+# Mocha-style reporter for Test Runner API
+
 
 ## Install package
 ```js
 npm install @blockquote/test-runner-mocha-style-reporter --save-dev
 ```
 
-## Reporters: Overview
-You can customize the test reporters using the reporters option
-
-### web-test-runner.config.mjs
+## web-test-runner.config.mjs
 
 ```js
 import { defaultReporter } from '@web/test-runner';
@@ -22,12 +20,28 @@ import { mochaStyleReporter } from '@blockquote/test-runner-mocha-style-reporter
 ...
 
 ```
+
+### Reporters: Overview
+By default, the reporter will report both test results and test coverage. You can disable these reports by passing options to the mochaStyleReporter() function:
+
+```js
+import { defaultReporter } from '@web/test-runner';
+import { mochaStyleReporter } from '@blockquote/test-runner-mocha-style-reporter';
+
+...
+  reporters: [
+      defaultReporter(),
+      mochaStyleReporter({ reportResults: true, reportCoverage: true }),
+  ],
+...
+
+```
+
 <hr>
 
-![reporter example](./test-runner-mocha-style-reporter.png)
-
-<hr>
 
 ## Reporter for web test runner
 
 See [moder-web website](https://modern-web.dev/docs/test-runner/reporters/write-your-own/) for full documentation.
+
+![reporter example](./test-runner-mocha-style-reporter.png)

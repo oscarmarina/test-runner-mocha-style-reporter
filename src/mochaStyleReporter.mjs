@@ -1,11 +1,5 @@
-/* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
-
 const colors = {
   reset: '\x1b[0m',
-  brightBlue: '\x1b[94m',
-  brightCyan: '\x1b[96m',
-  dim: '\x1b[2m',
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
@@ -15,11 +9,13 @@ const colors = {
 };
 
 function outputSuite(suite, indent = '', browser = '') {
-  const heading = `${colors.white}${suite.name}${browser ? ` [${browser}]` : '\n'}`;
+  const heading = `${colors.white}${suite.name}${
+    browser ? ` [${browser}]` : ''
+  }`;
 
   function getTestResult(test) {
     if (test.skipped) {
-      return `${colors.grey} ⤵  ${test.name}`;
+      return `${colors.grey} - ${test.name}`;
     }
     if (test.passed) {
       return `${colors.green} ✓ ${colors.reset}${colors.bright}${test.name}`;
@@ -38,7 +34,7 @@ function outputSuite(suite, indent = '', browser = '') {
   }
 
   const testResults = suite.tests
-    .map(test => {
+    .map((test) => {
       const result = getTestResult(test);
       const duration = getTestDuration(test);
       return `${indent}${result}${duration}${colors.reset}`;
@@ -46,24 +42,41 @@ function outputSuite(suite, indent = '', browser = '') {
     .join('\n');
 
   const subSuites = suite.suites
-    ? suite.suites.map(subSuite => outputSuite(subSuite, `${indent} `)).join('')
+    ? suite.suites
+        .map((subSuite) => outputSuite(subSuite, `${indent} `))
+        .join('')
     : '';
 
-  return `${indent}${heading}${colors.reset}${testResults}\n${subSuites}`;
+  const prefix = testResults === '' ? '' : '\n';
+  return `${indent}${heading}${colors.reset}${prefix}${testResults}\n${subSuites}`;
 }
 
 function generateTestReport(testFile, sessionsForTestFile) {
   let results = '';
 
-  sessionsForTestFile.forEach(session => {
+  sessionsForTestFile.forEach((session) => {
     const browserName = session.browser?.name ?? '';
-    results += session.testResults.suites.map(suite => outputSuite(suite, '', browserName));
+    results += session.testResults.suites.map((suite) =>
+      outputSuite(suite, '', browserName)
+    );
     results += '\n';
   });
   return results;
 }
 
-export function mochaStyleReporter({ reportResults = true, reportCoverage = true } = {}) {
+/**
+ * Returns a reporter object for the Test Runner API that outputs test results
+ * in a Mocha-like style.
+ *
+ * @param {Object} options - Optional parameters for the reporter.
+ * @param {boolean} options.reportResults - Whether to report test results. Default: true.
+ * @param {boolean} options.reportCoverage - Whether to report test coverage. Default: true.
+ * @returns {Object} A reporter object for the Test Runner API.
+ */
+export function mochaStyleReporter({
+  reportResults = true,
+  reportCoverage = true,
+} = {}) {
   return {
     /**
      * Called when a test run is finished. Each file change in watch mode
@@ -80,11 +93,14 @@ export function mochaStyleReporter({ reportResults = true, reportCoverage = true
         }
         const totalSkipped = Object.keys(summaryCopy).reduce(
           (prev, next) =>
-            prev + (testCoverage.summary[next]?.skipped ? testCoverage.summary[next].skipped : 0),
-          0,
+            prev +
+            (testCoverage.summary[next]?.skipped
+              ? testCoverage.summary[next].skipped
+              : 0),
+          0
         );
         if (totalSkipped === 0) {
-          Object.keys(summaryCopy).forEach(key => {
+          Object.keys(summaryCopy).forEach((key) => {
             delete summaryCopy[key]?.skipped;
           });
         }
